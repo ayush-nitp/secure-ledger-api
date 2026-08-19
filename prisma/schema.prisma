@@ -1,0 +1,143 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ------------------------------------------------------
+// 1. USER MODEL
+// ------------------------------------------------------
+model User {
+  id            String     @id @default(uuid())
+  name          String
+  email         String     @unique
+  passwordHash  String
+  role          Role       @default(USER)
+  emailVerified Boolean    @default(false)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  accounts      Account[]
+  auditLogs     AuditLog[]
+}
+
+// ------------------------------------------------------
+// 2. ACCOUNT MODEL (The Wallet)
+// ------------------------------------------------------
+model Account {
+  id            String        @id @default(uuid())
+  userId        String
+  user          User          @relation(fields: [userId], references: [id])
+  currency      String        @default("INR")
+  // Float kabhi use nahi karna money ke liye. Always use Decimal.
+  balance       Decimal       @default(0.00) @db.Decimal(12, 2)
+  status        AccountStatus @default(ACTIVE)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  ledgerEntries LedgerEntry[]
+
+  // Ek user ke paas same currency ke multiple active accounts na ho, iske liye constraint
+  @@unique([userId, currency])
+}
+
+// ------------------------------------------------------
+// 3. TRANSACTION MODEL (The Intent/Action)
+// ------------------------------------------------------
+model Transaction {
+  id             String            @id @default(uuid())
+  amount         Decimal           @db.Decimal(12, 2)
+  currency       String            @default("INR")
+  type           TransactionType
+  status         TransactionStatus @default(PENDING)
+  
+  // Idempotency key unique honi chahiye to prevent double-spending
+  idempotencyKey String?           @unique
+  reference      String?
+  
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  ledgerEntries  LedgerEntry[]
+}
+
+// ------------------------------------------------------
+// 4. LEDGER ENTRY MODEL (The Double-Entry Core)
+// ------------------------------------------------------
+model LedgerEntry {
+  id            String      @id @default(uuid())
+  transactionId String
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+  
+  accountId     String
+  account       Account     @relation(fields: [accountId], references: [id])
+  
+  amount        Decimal     @db.Decimal(12, 2)
+  type          EntryType   // DEBIT (paisa kata) or CREDIT (paisa aaya)
+  
+  createdAt     DateTime    @default(now())
+
+  // Fast queries ke liye indexing zaroori hai
+  @@index([accountId])
+  @@index([transactionId])
+}
+
+// ------------------------------------------------------
+// 5. AUDIT LOG MODEL (Security & Compliance)
+// ------------------------------------------------------
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  action      String
+  entityType  String
+  entityId    String
+  metadata    Json?    // Extra info (jaise failed login reason) yahan store hogi
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+}
+
+// ------------------------------------------------------
+// ENUMS
+// ------------------------------------------------------
+enum Role {
+  USER
+  ADMIN
+}
+
+enum AccountStatus {
+  ACTIVE
+  FROZEN
+  CLOSED
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  TRANSFER
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REVERSED
+}
+
+enum EntryType {
+  DEBIT
+  CREDIT
+}
+
+model TokenBlacklist {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([expiresAt])
+}

@@ -1,0 +1,140 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Backend Ledger API",
+    "version": "1.0.0",
+    "description": "Double-entry financial ledger API with PostgreSQL and Prisma."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Local Development Server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "paths": {
+    "/api/auth/register": {
+      "post": {
+        "summary": "Register a new user",
+        "tags": ["Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "email": { "type": "string" },
+                  "password": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "User created successfully" }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "summary": "Login to get a JWT token",
+        "tags": ["Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": { "type": "string" },
+                  "password": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Successful login returns token" }
+        }
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "summary": "Log out the current user",
+        "tags": ["Auth"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Logged out successfully" }
+        }
+      }
+    },
+    "/api/accounts": {
+      "post": {
+        "summary": "Create a new wallet",
+        "tags": ["Accounts"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "currency": { "type": "string", "example": "INR" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Wallet created successfully" }
+        }
+      },
+      "get": {
+        "summary": "Get logged-in user's wallets",
+        "tags": ["Accounts"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Returns array of accounts" }
+        }
+      }
+    },
+    "/api/transactions": {
+      "post": {
+        "summary": "Execute a secure transfer",
+        "tags": ["Transactions"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "fromAccount": { "type": "string" },
+                  "toAccount": { "type": "string" },
+                  "amount": { "type": "number" },
+                  "idempotencyKey": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Transaction completed successfully" },
+          "400": { "description": "Validation error or insufficient funds" }
+        }
+      }
+    }
+  }
+}

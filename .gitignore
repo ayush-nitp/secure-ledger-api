@@ -1,0 +1,37 @@
+# ========================================
+# 1. ENVIRONMENT VARIABLES (CRITICAL)
+# ========================================
+# This prevents your Database URL, JWT Secrets, and Passwords from leaking
+.env
+.env.*
+!.env.example
+
+# ========================================
+# 2. NODE DEPENDENCIES
+# ========================================
+# Prevents pushing GBs of library files (GitHub will install these via package.json)
+node_modules/
+
+# ========================================
+# 3. LOG FILES
+# ========================================
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ========================================
+# 4. PRISMA LOCAL DATABASES
+# ========================================
+# You are using PostgreSQL, but if you ever switch to local SQLite, this blocks it.
+# DO NOT ignore the 'prisma/' folder itself. You WANT to push your schema and migrations!
+*.db
+*.sqlite
+*.sqlite-journal
+
+# ========================================
+# 5. OS & EDITOR FILES
+# ========================================
+.DS_Store
+.vscode/
