@@ -18,7 +18,7 @@ router.post("/register", authLimiter, authController.register);
 
 /* POST /api/auth/login */
 router.post("/login", authLimiter, authController.login);
-router.get("/refresh", authController.refreshToken);
+router.post("/refresh-token", authController.refreshToken);
 
 /* POST /api/auth/logout */
 router.post("/logout", authMiddleware, authController.logout);
