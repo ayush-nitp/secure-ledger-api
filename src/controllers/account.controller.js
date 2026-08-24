@@ -1,14 +1,16 @@
 const { prisma } = require("../config/db");
 const { logAction } = require("../services/audit.service");
 
-async function createAccountController(req, res) {
-    try {
-        const userId = req.user.id;
-        
-        // 1. THIS IS THE MISSING LINE: Read the currency from the Postman body
-        const { currency = "INR" } = req.body; 
+// Naye imports Clean Architecture ke liye
+const asyncHandler = require("../utils/asyncHandler");
+const ApiError = require("../utils/ApiError");
+const ApiResponse = require("../utils/ApiResponse");
 
-        // 2. Prisma creates the account using the variable we just defined
+const createAccountController = asyncHandler(async (req, res) => {
+    const userId = req.user.id;
+    const { currency = "INR" } = req.body; 
+
+    try {
         const account = await prisma.account.create({
             data: {
                 userId: userId,
@@ -17,60 +19,55 @@ async function createAccountController(req, res) {
             }
         });
 
-        // 3. Log the successful wallet creation
         await logAction(userId, "WALLET_CREATED", { 
             accountId: account.id, 
             currency: account.currency 
         });
 
-        return res.status(201).json({ account });
+        return res.status(201).json(
+            new ApiResponse(201, account, "Account created successfully")
+        );
         
     } catch (error) {
-        console.error("Create Account Error:", error);
+        // Agar pehle se same currency ka account hai (Prisma unique constraint)
         if (error.code === 'P2002') {
-            return res.status(409).json({ message: "Account with this currency already exists for this user" });
+            throw new ApiError(409, "Account with this currency already exists for this user", "ACCOUNT_ALREADY_EXISTS");
         }
-        return res.status(500).json({ message: "Internal server error" });
+        // Baki koi bhi error aaye, toh seedha Global Error Handler ke paas bhej do
+        throw error; 
     }
-}
+});
 
-async function getUserAccountsController(req, res) {
-    try {
-        const accounts = await prisma.account.findMany({
-            where: { userId: req.user.id }
-        });
+const getUserAccountsController = asyncHandler(async (req, res) => {
+    // Pura try-catch hat gaya hai
+    const accounts = await prisma.account.findMany({
+        where: { userId: req.user.id }
+    });
 
-        return res.status(200).json({ accounts });
-    } catch (error) {
-        console.error("Get Accounts Error:", error);
-        return res.status(500).json({ message: "Internal server error" });
-    }
-}
+    return res.status(200).json(
+        new ApiResponse(200, { accounts }, "Accounts fetched successfully")
+    );
+});
 
-async function getAccountBalanceController(req, res) {
-    try {
-        const { accountId } = req.params;
+const getAccountBalanceController = asyncHandler(async (req, res) => {
+    const { accountId } = req.params;
 
-        const account = await prisma.account.findFirst({
-            where: {
-                id: accountId,
-                userId: req.user.id
-            }
-        });
-
-        if (!account) {
-            return res.status(404).json({ message: "Account not found" });
+    const account = await prisma.account.findFirst({
+        where: {
+            id: accountId,
+            userId: req.user.id
         }
+    });
 
-        return res.status(200).json({
-            accountId: account.id,
-            balance: account.balance
-        });
-    } catch (error) {
-        console.error("Get Balance Error:", error);
-        return res.status(500).json({ message: "Internal server error" });
+    if (!account) {
+        // Ab normal return ki jagah strictly ApiError throw hoga
+        throw new ApiError(404, "Account not found or does not belong to you", "ACCOUNT_NOT_FOUND");
     }
-}
+
+    return res.status(200).json(
+        new ApiResponse(200, { accountId: account.id, balance: account.balance }, "Balance fetched successfully")
+    );
+});
 
 module.exports = {
     createAccountController,
