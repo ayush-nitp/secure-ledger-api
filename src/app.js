@@ -2,7 +2,8 @@ const express = require("express")
 const cookieParser = require("cookie-parser")
 const rateLimit = require("express-rate-limit");
 const swaggerUi = require("swagger-ui-express");
-const swaggerDocument = require("../swagger.json"); // Or "../swagger.json" depending on where app.js is located
+const swaggerSpec = require("../config/swagger.config");
+
 const helmet = require("helmet");
 
 const app = express()
@@ -36,7 +37,7 @@ app.get("/", (req, res) => {
     res.send("Ledger Service is up and running")
 })
 
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/accounts", accountRouter);
 app.use("/api/v1/transactions", transactionRoutes);
