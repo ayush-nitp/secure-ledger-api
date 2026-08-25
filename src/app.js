@@ -2,7 +2,7 @@ const express = require("express")
 const cookieParser = require("cookie-parser")
 const rateLimit = require("express-rate-limit");
 const swaggerUi = require("swagger-ui-express");
-const swaggerSpec = require("../config/swagger.config");
+const swaggerSpec = require("./config/swagger.config");
 
 const helmet = require("helmet");
 

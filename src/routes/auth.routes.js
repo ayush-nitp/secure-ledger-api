@@ -12,15 +12,91 @@ const authLimiter = rateLimit({
     message: { success: false, message: "Too many authentication attempts, please try again later." }
 });
 
-/* POST /api/auth/register */
-// Notice how authLimiter sits between the route and the controller
+/**
+ * @swagger
+ * /api/v1/auth/register:
+ *   post:
+ *     summary: Register a new user
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: Ayush
+ *               email:
+ *                 type: string
+ *                 example: ayush@example.com
+ *               password:
+ *                 type: string
+ *                 example: password123
+ *     responses:
+ *       201:
+ *         description: User registered successfully
+ *       400:
+ *         description: Validation Failed
+ */
 router.post("/register", authLimiter, authController.register);
 
-/* POST /api/auth/login */
+/**
+ * @swagger
+ * /api/v1/auth/login:
+ *   post:
+ *     summary: User Login
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: ayush@example.com
+ *               password:
+ *                 type: string
+ *                 example: password123
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *       400:
+ *         description: Validation Failed
+ */
 router.post("/login", authLimiter, authController.login);
+
+/**
+ * @swagger
+ * /api/v1/auth/refresh-token:
+ *   post:
+ *     summary: Get new access token using refresh token cookie
+ *     tags: [Auth]
+ *     responses:
+ *       200:
+ *         description: New access token generated
+ *       401:
+ *         description: Token Expired or Missing
+ */
 router.post("/refresh-token", authController.refreshToken);
 
-/* POST /api/auth/logout */
+/**
+ * @swagger
+ * /api/v1/auth/logout:
+ *   post:
+ *     summary: Logout user and invalidate token
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Logged out successfully
+ *       401:
+ *         description: Unauthorized
+ */
 router.post("/logout", authMiddleware, authController.logout);
 
 module.exports = router;
