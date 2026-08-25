@@ -64,9 +64,14 @@ const login = asyncHandler(async (req, res) => {
         throw new ApiError(401, "Invalid credentials", "INVALID_CREDENTIALS");
     }
 
+    console.log("DB se aaya hua user object:", user);
+
     // 5. Create tokens
     const accessToken = jwt.sign(
-        { id: user.id }, 
+        { 
+            id: user.id,
+            tokenVersion: user.tokenVersion // Ye naya field add kiya 
+        }, 
         process.env.JWT_SECRET || "fallback_secret_do_not_use_in_prod", 
         { expiresIn: "15m" }
     );
@@ -164,4 +169,18 @@ const refreshToken = asyncHandler(async (req, res) => {
     }
 });
 
-module.exports = { register, login, logout, refreshToken };
+const logoutAll = asyncHandler(async (req, res) => {
+    const userId = req.user.id;
+
+    // User ka tokenVersion ek se badha dein
+    await prisma.user.update({
+        where: { id: userId },
+        data: { tokenVersion: { increment: 1 } }
+    });
+
+    return res.status(200).json(
+        new ApiResponse(200, null, "Successfully logged out from all devices. All previous tokens are now invalid.")
+    );
+});
+
+module.exports = { register, login, logout, refreshToken, logoutAll };

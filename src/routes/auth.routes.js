@@ -98,5 +98,34 @@ router.post("/refresh-token", authController.refreshToken);
  *         description: Unauthorized
  */
 router.post("/logout", authMiddleware, authController.logout);
-
+/**
+ * @swagger
+ * /api/v1/auth/logout-all:
+ *   post:
+ *     summary: Logout from all devices
+ *     description: Invalidates all existing active tokens for the logged-in user immediately. This acts as a panic button if the account is compromised.
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Successfully logged out from all devices
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Successfully logged out from all devices. All previous tokens are now invalid.
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 200
+ *       401:
+ *         description: Unauthorized access (Token invalid or already expired)
+ */
+router.post('/logout-all', authMiddleware, authController.logoutAll); 
 module.exports = router;

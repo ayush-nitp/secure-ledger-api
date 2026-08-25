@@ -33,6 +33,10 @@ const authMiddleware = asyncHandler(async (req, res, next) => {
             throw new ApiError(401, "Unauthorized access, user not found", "USER_NOT_FOUND");
         }
 
+        if (user.tokenVersion !== decoded.tokenVersion) {
+            throw new ApiError(401, "Session expired. You have been logged out from all devices.", "TOKEN_VERSION_MISMATCH");
+        }
+
         req.user = user;
         next();
     } catch (err) {
