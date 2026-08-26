@@ -104,7 +104,7 @@ router.post("/logout", authMiddleware, authController.logout);
  *   post:
  *     summary: Logout from all devices
  *     description: Invalidates all existing active tokens for the logged-in user immediately. This acts as a panic button if the account is compromised.
- *     tags: [Authentication]
+ *     tags: [Auth]
  *     security:
  *       - bearerAuth: []
  *     responses:
